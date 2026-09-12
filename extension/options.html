@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vigilo Settings</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 2rem; max-width: 600px; margin: 0 auto; }
+    h1 { color: #38bdf8; font-size: 1.5rem; margin-bottom: 1.5rem; }
+    .card { background: #1e293b; padding: 1.5rem; border-radius: 12px; border: 1px solid #334155; margin-bottom: 1.5rem; }
+    label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: #cbd5e1; }
+    input[type="text"] { width: 100%; padding: 0.6rem 0.8rem; background: #0f172a; border: 1px solid #475569; border-radius: 6px; color: white; margin-bottom: 1rem; box-sizing: border-box; }
+    button { background: #0284c7; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 700; cursor: pointer; }
+    .status { margin-top: 0.75rem; font-size: 0.85rem; color: #10b981; }
+  </style>
+</head>
+<body>
+  <h1>🛡️ Vigilo Extension Preferences</h1>
+  <div class="card">
+    <label for="backend-url">Vigilo Backend API URL</label>
+    <input type="text" id="backend-url" placeholder="http://localhost:8000" />
+    <button id="btn-save">Save Settings</button>
+    <div id="status" class="status"></div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>
