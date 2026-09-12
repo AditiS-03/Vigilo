@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vigilo Safety Shield</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="brand">
+        <span class="brand-icon">🛡️</span>
+        <span class="brand-name">VIGILO</span>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot online"></span>
+        <span class="status-text">Shield Active</span>
+      </div>
+    </header>
+
+    <!-- Nav Tabs -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="tab-shield">🛡️ Shield</button>
+      <button class="tab-btn" data-tab="tab-ask">🦉 Ask Vigilo</button>
+      <button class="tab-btn" data-tab="tab-demo">⚡ Judge Demo</button>
+    </nav>
+
+    <!-- TAB 1: Current Safety Shield -->
+    <div id="tab-shield" class="tab-content active">
+      <div class="score-card">
+        <div class="score-circle" id="score-circle">
+          <span class="score-number" id="score-number">--</span>
+          <span class="score-label">RISK</span>
+        </div>
+        <div class="score-info">
+          <div class="threat-severity" id="threat-severity">ANALYZING...</div>
+          <div class="current-domain" id="current-domain">Checking website...</div>
+        </div>
+      </div>
+
+      <!-- Child-friendly AI Explanation -->
+      <div class="explanation-card">
+        <div class="card-header">
+          <span class="owl-icon">🦉</span>
+          <span>Vigilo AI Explanation</span>
+        </div>
+        <p class="explanation-text" id="explanation-text">
+          Inspecting page security characteristics and evaluating threats...
+        </p>
+      </div>
+
+      <!-- Indicators List -->
+      <div class="indicators-card" id="indicators-card" style="display: none;">
+        <div class="indicators-title">Detected Indicators:</div>
+        <ul id="indicators-list" class="indicators-list"></ul>
+      </div>
+
+      <!-- Safe Alternatives Drawer -->
+      <div class="safe-alt-card" id="safe-alt-card" style="display: none;">
+        <div class="card-header">✨ Safer Places to Explore:</div>
+        <div id="safe-alt-list" class="safe-alt-list"></div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="quick-actions">
+        <button id="btn-open-dashboard" class="btn-action">📊 Open Parent Dashboard</button>
+      </div>
+    </div>
+
+    <!-- TAB 2: Ask Vigilo AI Assistant -->
+    <div id="tab-ask" class="tab-content">
+      <div class="chat-container">
+        <div class="chat-intro">
+          <div class="owl-large">🦉</div>
+          <p>Hi! I'm your Vigilo safety buddy. Ask me anything about websites, games, or keeping your passwords safe!</p>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg bot">
+            Is there a website or download you're not sure about? Ask me!
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="Is this website safe?" />
+          <button id="chat-send">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Demo Simulator for Hackathon Judges -->
+    <div id="tab-demo" class="tab-content">
+      <div class="demo-intro">
+        <strong>⚡ 1-Click Judge Presentation Scenarios:</strong>
+        <p>Trigger any threat vector to observe the multi-signal AI detection, quarantine simulation, and response agent in real-time.</p>
+      </div>
+
+      <div class="demo-buttons-grid">
+        <button class="demo-btn safe" data-scenario="scenario_1_safe">
+          🟢 1. Safe Edu Site
+        </button>
+        <button class="demo-btn danger" data-scenario="scenario_2_gaming_scam">
+          🔴 2. Fake Gaming Reward
+        </button>
+        <button class="demo-btn danger" data-scenario="scenario_3_fake_login">
+          🔴 3. Fake Login Phishing
+        </button>
+        <button class="demo-btn warning" data-scenario="scenario_4_download">
+          🚨 4. Suspicious Download
+        </button>
+        <button class="demo-btn info" data-scenario="scenario_5_adaptive">
+          ⚡ 5. Adaptive Shift
+        </button>
+        <button class="demo-btn info" data-scenario="scenario_6_coach">
+          🎮 6. Coach Challenge
+        </button>
+      </div>
+
+      <div id="demo-result" class="demo-result-box" style="display: none;">
+        <div id="demo-result-title" class="demo-result-title"></div>
+        <pre id="demo-result-body" class="demo-result-body"></pre>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      <span>Vigilo AI Defense • Privacy Guaranteed</span>
+      <a href="#" id="link-options">Settings</a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

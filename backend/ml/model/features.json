@@ -1,0 +1,23 @@
+{
+  "feature_names": [
+    "url_length",
+    "domain_length",
+    "num_dots",
+    "num_hyphens",
+    "num_underscores",
+    "num_slash",
+    "num_digits",
+    "num_special_chars",
+    "num_subdomains",
+    "is_ip_address",
+    "is_https",
+    "has_suspicious_tld",
+    "num_url_params",
+    "scam_keyword_count",
+    "has_password_field",
+    "has_urgency_text"
+  ],
+  "model_type": "random_forest",
+  "training_samples": 34,
+  "cv_accuracy": 0.9696969696969697
+}
