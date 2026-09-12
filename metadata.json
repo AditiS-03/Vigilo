@@ -1,0 +1,8 @@
+{
+  "name": "Vigilo - Parent Safety & Threat Intelligence Dashboard",
+  "description": "AI-powered child safety platform that detects online threats, explains risks to kids and parents, provides adaptive protection, and teaches cybersecurity habits.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
