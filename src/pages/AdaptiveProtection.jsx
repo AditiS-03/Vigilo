@@ -1,12 +1,169 @@
 import React, { useState, useEffect } from 'react';
-import { Sliders, Shield, Zap, RefreshCw, CheckCircle2, AlertTriangle, Lock, EyeOff, Info, ArrowDown, Sparkles } from 'lucide-react';
+import { Sliders, Shield, Zap, RefreshCw, ChevronDown, Info, Clock, ArrowRight } from 'lucide-react';
 import { fetchAdaptiveProfile, triggerAdaptiveIncident, updateAdaptiveThresholds } from '../api';
+
+const PROTECTION_CATEGORIES = [
+  {
+    key: 'gaming',
+    counterKey: 'gaming_scams',
+    levelKey: 'gaming_scams',
+    icon: '🎮',
+    title: 'Gaming Scams',
+    description: 'Fake free V-Bucks, Robux generators, coin giveaways, and reward traps.',
+    details: [
+      'Free reward offers',
+      'Suspicious gaming websites',
+      'Coin and skin generators',
+      'Fake game currency sites',
+    ],
+    simulateCategory: 'gaming_scams',
+    simulateLabel: '+ Simulate Gaming Threat',
+    color: 'rose',
+  },
+  {
+    key: 'phishing',
+    counterKey: 'phishing',
+    levelKey: 'phishing',
+    icon: '🔗',
+    title: 'Phishing',
+    description: 'Fake login pages, credential harvesters, and account verification scams.',
+    details: [
+      'Fake account login pages',
+      'Urgency manipulation tactics',
+      'Credential harvesting forms',
+      'Impersonation of real platforms',
+    ],
+    simulateCategory: 'phishing',
+    simulateLabel: '+ Simulate Phishing Threat',
+    color: 'amber',
+  },
+  {
+    key: 'downloads',
+    counterKey: 'malicious_downloads',
+    levelKey: 'malicious_downloads',
+    icon: '⬇',
+    title: 'Suspicious Downloads',
+    description: 'Executable files, game mod installers, and suspicious file downloads.',
+    details: [
+      'Executable .exe and .scr files',
+      'Game mods from unknown sites',
+      'Files from suspicious domains',
+      'Bait-named game installers',
+    ],
+    simulateCategory: 'malicious_downloads',
+    simulateLabel: '+ Simulate Download Threat',
+    color: 'violet',
+  },
+];
+
+const LEVEL_OPTIONS = ['STANDARD', 'MEDIUM', 'HIGH'];
+
+const levelColors = {
+  HIGH: { badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40', ring: 'border-rose-500/40', label: 'HIGH ATTENTION' },
+  MEDIUM: { badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40', ring: 'border-amber-500/30', label: 'MEDIUM ATTENTION' },
+  STANDARD: { badge: 'bg-slate-700/60 text-slate-300 border-slate-600/50', ring: 'border-slate-700', label: 'STANDARD' },
+  LOW: { badge: 'bg-slate-700/60 text-slate-300 border-slate-600/50', ring: 'border-slate-700', label: 'STANDARD' },
+};
+
+function getLevel(count) {
+  if (count >= 5) return 'HIGH';
+  if (count >= 2) return 'MEDIUM';
+  return 'STANDARD';
+}
+
+function getReasonText(category, count) {
+  if (count === 0) return 'No threats encountered yet in this category. Standard protection is active.';
+  if (count >= 5) return `This profile has encountered ${count} ${category.title.toLowerCase()} recently. Vigilo increased attention for this category.`;
+  if (count >= 2) return `${count} ${category.title.toLowerCase()} have been detected. Protection is being elevated.`;
+  return `${count} event${count > 1 ? 's' : ''} detected. Monitoring closely.`;
+}
+
+function ProtectionCard({ cat, count, isUpdating, onSimulate }) {
+  const [showReason, setShowReason] = useState(false);
+  const level = getLevel(count);
+  const colors = levelColors[level] || levelColors.STANDARD;
+
+  return (
+    <div className={`glass-panel rounded-2xl p-6 border ${colors.ring} space-y-5 transition-all`}>
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 rounded-xl bg-slate-800/60 border border-slate-700 flex items-center justify-center text-2xl">
+            {cat.icon}
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">{cat.title}</h3>
+            <p className="text-xs text-slate-400 mt-0.5">{count} event{count !== 1 ? 's' : ''} detected</p>
+          </div>
+        </div>
+        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${colors.badge}`}>
+          {colors.label}
+        </span>
+      </div>
+
+      {/* Description */}
+      <p className="text-sm text-slate-300 leading-relaxed">{cat.description}</p>
+
+      {/* What Vigilo watches */}
+      <div className="bg-slate-900/60 rounded-xl p-4 space-y-2">
+        <p className="text-xs font-semibold text-slate-400">Vigilo pays extra attention to:</p>
+        <ul className="space-y-1">
+          {cat.details.map((d, i) => (
+            <li key={i} className="flex items-center space-x-2 text-xs text-slate-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 flex-shrink-0" />
+              <span>{d}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Protection level indicator */}
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs text-slate-400">
+          <span>Protection Level</span>
+          <span className={`font-bold ${level === 'HIGH' ? 'text-rose-400' : level === 'MEDIUM' ? 'text-amber-400' : 'text-slate-300'}`}>
+            {level}
+          </span>
+        </div>
+        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-700 ${level === 'HIGH' ? 'bg-rose-500 w-full' : level === 'MEDIUM' ? 'bg-amber-500 w-2/3' : 'bg-slate-500 w-1/3'}`}
+          />
+        </div>
+      </div>
+
+      {/* Why did Vigilo change this? */}
+      <button
+        onClick={() => setShowReason(!showReason)}
+        className="flex items-center space-x-1.5 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+      >
+        <Info className="w-3.5 h-3.5" />
+        <span>Why did Vigilo set this level?</span>
+      </button>
+
+      {showReason && (
+        <div className="p-3 bg-cyan-500/5 border border-cyan-500/20 rounded-xl text-xs text-slate-300 leading-relaxed animate-fade-in">
+          {getReasonText(cat, count)}
+        </div>
+      )}
+
+      {/* Simulate button for demo */}
+      <button
+        onClick={() => onSimulate(cat.simulateCategory)}
+        disabled={isUpdating}
+        className="w-full py-2.5 text-xs font-semibold text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-600 rounded-xl transition-all disabled:opacity-50"
+      >
+        {isUpdating ? <RefreshCw className="w-3.5 h-3.5 animate-spin mx-auto" /> : cat.simulateLabel}
+      </button>
+    </div>
+  );
+}
 
 export default function AdaptiveProtection() {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const loadProfile = async () => {
     try {
@@ -14,258 +171,156 @@ export default function AdaptiveProtection() {
       const data = await fetchAdaptiveProfile();
       setProfile(data);
     } catch (err) {
-      console.error("Failed to load adaptive profile:", err);
+      console.error('Failed to load adaptive profile:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  useEffect(() => { loadProfile(); }, []);
 
-  const handleSimulateEncounter = async (category) => {
+  const handleSimulate = async (category) => {
     try {
       setIsUpdating(true);
       const res = await triggerAdaptiveIncident(category);
       setProfile(res.profile);
-      setToastMessage(`Simulated ${category.replace('_', ' ')} encounter! Threshold dynamically adapted.`);
-      setTimeout(() => setToastMessage(null), 3500);
+      const catLabel = PROTECTION_CATEGORIES.find(c => c.simulateCategory === category)?.title || category;
+      setToast(`Protection updated: ${catLabel} attention increased.`);
+      setTimeout(() => setToast(null), 3500);
     } catch (err) {
-      console.error("Simulation error:", err);
+      console.error('Simulation error:', err);
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleSliderChange = async (categoryKey, value) => {
-    if (!profile) return;
-    const newThresholds = {
-      ...profile.adapted_thresholds,
-      [categoryKey]: parseInt(value)
-    };
-    setProfile({
-      ...profile,
-      adapted_thresholds: newThresholds
-    });
-
-    try {
-      await updateAdaptiveThresholds(newThresholds);
-    } catch (err) {
-      console.error("Failed to save threshold:", err);
-    }
-  };
-
   if (isLoading || !profile) {
     return (
-      <div className="p-12 text-center text-slate-400 flex items-center justify-center space-x-2">
+      <div className="flex items-center justify-center py-24 space-x-3 text-slate-400">
         <RefreshCw className="w-5 h-5 animate-spin" />
-        <span>Loading Adaptive Protection Profile...</span>
+        <span className="text-sm">Loading protection profile…</span>
       </div>
     );
   }
 
-  const getLevelColor = (level) => {
-    if (level === 'HIGH') return 'bg-rose-500/20 text-rose-300 border-rose-500/40';
-    if (level === 'MEDIUM') return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
-    return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-cyan-950/90 border border-cyan-500/50 text-cyan-200 px-4 py-3 rounded-xl shadow-2xl text-xs flex items-center space-x-2 animate-bounce">
+    <div className="space-y-8">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-20 right-6 z-50 bg-cyan-950 border border-cyan-500/40 text-cyan-200 px-5 py-3 rounded-xl shadow-2xl text-sm flex items-center space-x-2">
           <Zap className="w-4 h-4 text-cyan-400" />
-          <span>{toastMessage}</span>
+          <span>{toast}</span>
         </div>
       )}
 
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-white flex items-center space-x-2">
-          <Sliders className="w-5 h-5 text-cyan-400" />
-          <span>Privacy-Preserving Adaptive Threat Protection</span>
-        </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Dynamic sensitivity tuning based on aggregated threat frequencies without tracking child browsing history.
+      {/* Page Header */}
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <Sliders className="w-6 h-6 text-cyan-400" />
+          <h1 className="text-3xl font-bold text-white">Adaptive Protection</h1>
+        </div>
+        <p className="text-slate-400 text-base leading-relaxed max-w-2xl">
+          Vigilo learns which types of online threats matter most to this profile and adjusts protection accordingly.
         </p>
       </div>
 
-      {/* Privacy Guarantee Card */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-850 border border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-start space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 flex-shrink-0">
-            <EyeOff className="w-5 h-5" />
+      {/* Status Overview */}
+      <div className="glass-panel rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-emerald-500/20">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+            <Shield className="w-6 h-6 text-emerald-400" />
           </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-              <span>Zero Browsing Surveillance Architecture</span>
-              <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                Guaranteed
-              </span>
-            </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Traditional parental monitoring logs every innocent website, query, and message a child reads. Vigilo <strong>strictly rejects surveillance</strong>.
-              Protection is adapted purely via anonymous category frequency counters (e.g. <code className="text-cyan-300 font-mono">gaming_scams: {profile.gaming_scams}</code>). When gaming scam exposure rises, Vigilo automatically lowers the detection threshold from 70 to 55, scrutinizing gaming traps without ever recording innocent browsing.
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <h2 className="text-sm font-bold text-white">Protection Active for Leo</h2>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Total threats encountered: <strong className="text-white">{(profile.gaming_scams || 0) + (profile.phishing || 0) + (profile.malicious_downloads || 0)}</strong>
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Adaptive Threat Category Gauges */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Gaming Scams */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-bold text-white">Gaming Scams</h4>
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${getLevelColor(profile.threat_levels?.gaming_scams)}`}>
-              {profile.threat_levels?.gaming_scams || 'MEDIUM'} SCRUTINY
-            </span>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Aggregated Encounters:</span>
-              <strong className="text-white">{profile.gaming_scams} events</strong>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Adapted Warning Threshold:</span>
-              <strong className="text-cyan-400">{profile.adapted_thresholds?.gaming || 55} / 100</strong>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] text-slate-400 block mb-1">Sensitivity Slider (Lower = More Strict):</label>
-            <input
-              type="range"
-              min="30"
-              max="80"
-              value={profile.adapted_thresholds?.gaming || 55}
-              onChange={(e) => handleSliderChange('gaming', e.target.value)}
-              className="w-full accent-cyan-500"
-            />
-            <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-              <span>Strict (30)</span>
-              <span>Default (70)</span>
-            </div>
-          </div>
-
-          <button
-            disabled={isUpdating}
-            onClick={() => handleSimulateEncounter('gaming_scams')}
-            className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold rounded-xl transition-all"
-          >
-            + Simulate Gaming Scam Exposure
-          </button>
-        </div>
-
-        {/* Phishing Traps */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-bold text-white">Credential Phishing</h4>
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${getLevelColor(profile.threat_levels?.phishing)}`}>
-              {profile.threat_levels?.phishing || 'LOW'} SCRUTINY
-            </span>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Aggregated Encounters:</span>
-              <strong className="text-white">{profile.phishing} events</strong>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Adapted Warning Threshold:</span>
-              <strong className="text-cyan-400">{profile.adapted_thresholds?.phishing || 60} / 100</strong>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] text-slate-400 block mb-1">Sensitivity Slider (Lower = More Strict):</label>
-            <input
-              type="range"
-              min="30"
-              max="80"
-              value={profile.adapted_thresholds?.phishing || 60}
-              onChange={(e) => handleSliderChange('phishing', e.target.value)}
-              className="w-full accent-cyan-500"
-            />
-            <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-              <span>Strict (30)</span>
-              <span>Default (70)</span>
-            </div>
-          </div>
-
-          <button
-            disabled={isUpdating}
-            onClick={() => handleSimulateEncounter('phishing')}
-            className="w-full py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold rounded-xl transition-all"
-          >
-            + Simulate Phishing Exposure
-          </button>
-        </div>
-
-        {/* Malicious Downloads */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-bold text-white">Executable Downloads</h4>
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${getLevelColor(profile.threat_levels?.malicious_downloads)}`}>
-              {profile.threat_levels?.malicious_downloads || 'MEDIUM'} SCRUTINY
-            </span>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Aggregated Encounters:</span>
-              <strong className="text-white">{profile.malicious_downloads} events</strong>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Adapted Warning Threshold:</span>
-              <strong className="text-cyan-400">{profile.adapted_thresholds?.downloads || 50} / 100</strong>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] text-slate-400 block mb-1">Sensitivity Slider (Lower = More Strict):</label>
-            <input
-              type="range"
-              min="30"
-              max="80"
-              value={profile.adapted_thresholds?.downloads || 50}
-              onChange={(e) => handleSliderChange('downloads', e.target.value)}
-              className="w-full accent-cyan-500"
-            />
-            <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-              <span>Strict (30)</span>
-              <span>Default (70)</span>
-            </div>
-          </div>
-
-          <button
-            disabled={isUpdating}
-            onClick={() => handleSimulateEncounter('malicious_downloads')}
-            className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold rounded-xl transition-all"
-          >
-            + Simulate Download Exposure
-          </button>
+        <div className="flex flex-wrap gap-3 text-xs">
+          {PROTECTION_CATEGORIES.map(cat => {
+            const count = profile[cat.counterKey] || 0;
+            const level = getLevel(count);
+            const c = levelColors[level];
+            return (
+              <div key={cat.key} className={`px-3 py-1.5 rounded-full border font-semibold ${c.badge}`}>
+                {cat.icon} {cat.title}: {c.label}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Adaptive Mathematics Explanation */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
-        <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-          <Sparkles className="w-4 h-4 text-cyan-400" />
-          <span>The Adaptation Model Formula</span>
-        </h3>
-        <p className="text-xs text-slate-300 leading-relaxed">
-          The threat detection engine uses an inverse linear penalty formula to compute adapted thresholds:
-        </p>
-        <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs text-cyan-300 overflow-x-auto">
-          Threshold(Gaming) = max(35, 70 - (gaming_scams_counter * 3))
+      {/* Category Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {PROTECTION_CATEGORIES.map(cat => (
+          <ProtectionCard
+            key={cat.key}
+            cat={cat}
+            count={profile[cat.counterKey] || 0}
+            isUpdating={isUpdating}
+            onSimulate={handleSimulate}
+          />
+        ))}
+      </div>
+
+      {/* Protection Timeline */}
+      <div className="glass-panel rounded-2xl p-6 space-y-5">
+        <div className="flex items-center space-x-2">
+          <Clock className="w-5 h-5 text-cyan-400" />
+          <h2 className="text-lg font-bold text-white">Protection History</h2>
         </div>
-        <p className="text-xs text-slate-400">
-          As a child encounters repeated deceptive reward lures, Vigilo automatically lowers the threshold from 70 down to 55, triggering warnings on ambiguous sites that would otherwise pass a generic filter.
-        </p>
+
+        <div className="space-y-3">
+          {[
+            { time: '10:42 AM', type: 'Gaming Phishing', score: 94, action: 'Blocked', color: 'rose' },
+            { time: '10:39 AM', type: 'Suspicious Download', score: 87, action: 'Warning', color: 'amber' },
+            { time: '9:51 AM', type: 'Safe Gaming Site', score: 12, action: 'Allowed', color: 'emerald' },
+          ].map((event, i) => (
+            <div key={i} className="flex items-center justify-between p-4 bg-slate-900/60 rounded-xl border border-slate-800 hover:border-slate-700 transition-all">
+              <div className="flex items-center space-x-4">
+                <div className={`w-2 h-2 rounded-full ${event.color === 'rose' ? 'bg-rose-500' : event.color === 'amber' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                <div>
+                  <p className="text-sm font-medium text-white">{event.type}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{event.time} today</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3 text-right">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs border ${
+                  event.score >= 80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
+                  event.score >= 50 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                  'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                }`}>
+                  {event.score}
+                </div>
+                <span className={`text-xs font-bold ${
+                  event.action === 'Blocked' ? 'text-rose-400' :
+                  event.action === 'Warning' ? 'text-amber-400' :
+                  'text-emerald-400'
+                }`}>
+                  {event.action}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Protection Update Notice */}
+        {(profile.gaming_scams >= 3 || profile.phishing >= 2 || profile.malicious_downloads >= 2) && (
+          <div className="p-4 bg-cyan-500/5 border border-cyan-500/20 rounded-xl space-y-2">
+            <div className="flex items-center space-x-2">
+              <Zap className="w-4 h-4 text-cyan-400" />
+              <span className="text-sm font-bold text-white">Protection Updated</span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {profile.gaming_scams >= 3 && `Gaming Scam Protection: STANDARD → HIGH. Reason: Repeated gaming-related threats detected (${profile.gaming_scams} events).`}
+              {profile.phishing >= 2 && ` Phishing Protection elevated due to ${profile.phishing} phishing encounters.`}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

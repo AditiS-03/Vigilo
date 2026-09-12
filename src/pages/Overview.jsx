@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { ShieldCheck, AlertTriangle, ShieldAlert, Download, Sliders, CheckCircle2, ChevronRight, ExternalLink, Sparkles, Activity, Clock, ArrowUpRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import DemoBanner from '../components/DemoBanner';
 import IncidentModal from '../components/IncidentModal';
 
-export default function Overview({ summary, incidents = [], onNavigate, onScenarioSimulated }) {
+export default function Overview({ summary, incidents = [], onScenarioSimulated }) {
   const [selectedIncident, setSelectedIncident] = useState(null);
+  const navigate = useNavigate();
 
   const todays = summary?.todays_protection || {
     high_risk_threats: 14,
@@ -140,8 +142,8 @@ export default function Overview({ summary, incidents = [], onNavigate, onScenar
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>Multi-Signal ML (Random Forest) + Gemini AI Active</span>
             </span>
-            <button
-              onClick={() => onNavigate('analyzer')}
+              <button
+              onClick={() => navigate('/threat-lab')}
               className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center space-x-1"
             >
               <span>Test Live Analyzer</span>
@@ -201,7 +203,7 @@ export default function Overview({ summary, incidents = [], onNavigate, onScenar
 
           <div className="mt-4 pt-3 border-t border-slate-800">
             <button
-              onClick={() => onNavigate('adaptive')}
+              onClick={() => navigate('/adaptive')}
               className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-bold rounded-xl transition-colors text-center"
             >
               Tune Adaptive Thresholds →
@@ -218,7 +220,7 @@ export default function Overview({ summary, incidents = [], onNavigate, onScenar
             <p className="text-xs text-slate-400">Click any incident to inspect complete multi-signal indicators and evidence pack.</p>
           </div>
           <button
-            onClick={() => onNavigate('incidents')}
+            onClick={() => navigate('/incidents')}
             className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center space-x-1"
           >
             <span>View All Incidents</span>

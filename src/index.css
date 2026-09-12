@@ -4,7 +4,20 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 min-h-screen selection:bg-cyan-500/30 selection:text-cyan-200;
+    @apply bg-cyber-dark text-slate-100 min-h-screen selection:bg-cyan-500/30 selection:text-cyan-200 bg-grid-pattern relative;
+  }
+  
+  /* Cyber grid background overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, transparent 0%, #030712 100%);
+    pointer-events: none;
+    z-index: -1;
   }
 }
 
@@ -14,21 +27,21 @@
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b1120;
+  background: #030712;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #1e3a8a;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #06b6d4;
 }
 
-@keyframes pulseSlow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.animate-pulse-slow {
-  animation: pulseSlow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@layer utilities {
+  .glass-panel {
+    @apply bg-slate-900/40 backdrop-blur-md border border-slate-700/50 shadow-glass;
+  }
+  .glass-panel-glow {
+    @apply glass-panel hover:border-cyan-500/30 hover:shadow-neon-cyan transition-all duration-300;
+  }
 }
