@@ -9,6 +9,9 @@ import QuickScan from './pages/QuickScan';
 import AdaptiveProtection from './pages/AdaptiveProtection';
 import Profile from './pages/Profile';
 import Extension from './pages/Extension';
+import Coach from './pages/Coach';
+import AskVigilo from './pages/AskVigilo';
+import OwlAssistantWidget from './components/OwlAssistantWidget';
 import { fetchDashboardSummary, fetchIncidents, simulateScenario } from './api';
 
 export default function App() {
@@ -85,6 +88,8 @@ export default function App() {
           <Route path="/quick-scan" element={<QuickScan />} />
           <Route path="/threat-lab" element={<LiveAnalyzer />} />
           <Route path="/adaptive" element={<AdaptiveProtection />} />
+          <Route path="/coach" element={<Coach />} />
+          <Route path="/ask-vigilo" element={<AskVigilo />} />
           <Route path="/profile" element={<Profile summary={summary} incidents={incidents} />} />
           <Route path="/extension" element={<Extension />} />
         </Routes>
@@ -108,6 +113,8 @@ export default function App() {
           </div>
         </footer>
       )}
+      {/* Global Floating Safety Owl Assistant */}
+      {!isLanding && location.pathname !== '/ask-vigilo' && <OwlAssistantWidget />}
     </div>
   );
 }

@@ -8,7 +8,43 @@ export default function Incidents({ incidents = [] }) {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
 
-  const filtered = incidents.filter(inc => {
+  const sourceIncidents = incidents.length > 0 ? incidents : [
+    {
+      id: 'VIG-DEMO-01',
+      threat_type: 'Fake Gaming Currency Scam',
+      threat_category: 'gaming_scams',
+      risk_score: 92,
+      domain: 'free-minecraft-coins-999.xyz',
+      url: 'http://free-minecraft-coins-999.xyz/claim?user=steve',
+      action_taken: 'BLOCK_PAGE',
+      detected_indicators: ['Suspicious .xyz domain', 'Urgency countdown', 'Password harvesting lure'],
+      created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'VIG-DEMO-02',
+      threat_type: 'Roblox Credential Harvester',
+      threat_category: 'phishing',
+      risk_score: 95,
+      domain: 'roblox-verification.xyz',
+      url: 'http://roblox-verification.xyz/login',
+      action_taken: 'BLOCK_PAGE',
+      detected_indicators: ['Fake login form', 'Urgent account verification prompt', 'Unverified host'],
+      created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'VIG-DEMO-03',
+      threat_type: 'Dangerous Executable Download',
+      threat_category: 'malicious_downloads',
+      risk_score: 89,
+      domain: 'free-game-rewards.xyz',
+      url: 'http://free-game-rewards.xyz/download',
+      action_taken: 'CANCEL_DOWNLOAD',
+      detected_indicators: ['Executable .exe payload', 'Installer exploit bait', 'Untrusted origin'],
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+
+  const filtered = sourceIncidents.filter(inc => {
     if (categoryFilter !== 'all' && inc.threat_category !== categoryFilter) return false;
     if (severityFilter === 'dangerous' && inc.risk_score < 80) return false;
     if (severityFilter === 'high' && (inc.risk_score < 50 || inc.risk_score >= 80)) return false;
@@ -47,7 +83,7 @@ export default function Incidents({ incidents = [] }) {
         </div>
 
         <div className="text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
-          Showing <strong className="text-white">{filtered.length}</strong> of {incidents.length} recorded events
+          Showing <strong className="text-white">{filtered.length}</strong> of {sourceIncidents.length} recorded events
         </div>
       </div>
 

@@ -68,3 +68,17 @@ def get_incident_report(incident_id: str, format: str = Query("pdf", pattern="^(
             filename=f"Vigilo_Evidence_{incident_id}.pdf",
             media_type="application/pdf"
         )
+
+@router.get("/{incident_id}/evidence/pdf")
+def get_incident_evidence_pdf(incident_id: str):
+    inc = db_service.get_incident(incident_id)
+    if not inc:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    pdf_path = generate_pdf_report(inc)
+    if not os.path.exists(pdf_path):
+        raise HTTPException(status_code=500, detail="Failed to generate PDF")
+    return FileResponse(
+        path=pdf_path,
+        filename=f"Vigilo_Evidence_{incident_id}.pdf",
+        media_type="application/pdf"
+    )

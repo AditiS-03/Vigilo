@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, Bell, AlertTriangle, CheckCircle2, User, Sparkles, Sliders, Cpu, Chrome, Search } from 'lucide-react';
+import { Shield, Bell, AlertTriangle, CheckCircle2, User, Sparkles, Sliders, Cpu, Chrome, Search, BookOpen, MessageSquareText } from 'lucide-react';
 
 export default function Header({ notifications = [], aiStatus, onTriggerScenario }) {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -10,11 +10,13 @@ export default function Header({ notifications = [], aiStatus, onTriggerScenario
   const navItems = [
     { id: '/protection', label: 'Live Protection', icon: Shield },
     { id: '/quick-scan', label: 'Quick Scan', icon: Search },
+    { id: '/threat-lab', label: 'Threat Lab', icon: Cpu },
     { id: '/incidents', label: 'Incidents', icon: AlertTriangle },
     { id: '/adaptive', label: 'Adaptive', icon: Sliders },
     { id: '/profile', label: 'Profile', icon: User },
+    { id: '/coach', label: 'Coach', icon: BookOpen },
+    { id: '/ask-vigilo', label: 'Owl', icon: MessageSquareText },
     { id: '/extension', label: 'Extension', icon: Chrome },
-    { id: '/threat-lab', label: 'Threat Lab', icon: Cpu },
   ];
 
   return (

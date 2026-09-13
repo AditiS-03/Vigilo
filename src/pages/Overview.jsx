@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, AlertTriangle, ShieldAlert, Download, Sliders, CheckCircle2, ChevronRight, ExternalLink, Sparkles, Activity, Clock, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import DemoBanner from '../components/DemoBanner';
 import IncidentModal from '../components/IncidentModal';
 
 export default function Overview({ summary, incidents = [], onScenarioSimulated }) {
@@ -44,9 +43,6 @@ export default function Overview({ summary, incidents = [], onScenarioSimulated 
 
   return (
     <div className="space-y-6">
-      {/* 1-Click Judge Presentation Console Banner */}
-      <DemoBanner onScenarioSimulated={onScenarioSimulated} />
-
       {/* Today's Protection KPI Counters */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-slate-700 transition-all">

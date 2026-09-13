@@ -18,19 +18,29 @@ class AskVigiloRequest(BaseModel):
     risk_score: Optional[int] = 0
     threat_type: Optional[str] = "None"
     detected_indicators: Optional[list] = []
+    context: Optional[Any] = None
 
 @router.post("")
 def ask_vigilo(req: AskVigiloRequest):
-    context = {
+    ctx = {
         "url": req.current_url,
         "risk_score": req.risk_score,
         "threat_type": req.threat_type,
         "detected_indicators": req.detected_indicators or []
     }
-    answer = gemini_service.ask_vigilo(req.question, context)
+    if isinstance(req.context, dict):
+        ctx.update(req.context)
+    elif isinstance(req.context, str) and req.context:
+        ctx["url"] = req.context
+
+    answer = gemini_service.ask_vigilo(req.question, ctx)
+    prevention = gemini_service.build_prevention_guidance(req.question, ctx)
     return {
         "question": req.question,
+        "answer": answer,
         "response": answer,
         "assistant_name": "Vigilo Companion Owl",
-        "tone": "child_friendly"
+        "tone": "child_friendly",
+        "safety_tip": prevention["safety_tip"],
+        "action_recommended": prevention["action_recommended"],
     }

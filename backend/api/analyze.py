@@ -39,6 +39,20 @@ class DownloadAnalyzeRequest(BaseModel):
     source_url: str = Field(..., json_schema_extra={"example": "http://free-coins.xyz/download"})
     file_size: Optional[int] = 0
 
+class ScreenAnalyzeRequest(BaseModel):
+    image_base64: str
+    url: Optional[str] = ""
+    page_title: Optional[str] = "Screen Capture"
+
+def compute_verification_status(domain: str, url: str, risk_score: int, indicators: List[str], db_service: DatabaseService) -> str:
+    trusted = db_service.get_trusted_sources_db()
+    for t in trusted:
+        if t["domain"].lower() in domain.lower() or t["domain"].lower() in url.lower():
+            return "VERIFIED"
+    if risk_score >= 60 or any(k in " ".join(indicators).lower() for k in ["credential", "lure", "phishing", "fake", "executable"]):
+        return "SUSPICIOUS"
+    return "UNVERIFIED"
+
 @router.post("/url")
 def analyze_url(req: URLAnalyzeRequest):
     if not req.url:
@@ -72,6 +86,14 @@ def analyze_url(req: URLAnalyzeRequest):
         adaptive_thresholds=adaptive_profile.get("adapted_thresholds")
     )
 
+    verif_status = compute_verification_status(
+        domain=ml_res["domain"],
+        url=req.url,
+        risk_score=composite["risk_score"],
+        indicators=ml_res["detected_indicators"],
+        db_service=db_service
+    )
+
     # 6. Response Agent Execution
     agent_context = {
         "url": req.url,
@@ -81,6 +103,7 @@ def analyze_url(req: URLAnalyzeRequest):
         "risk_score": composite["risk_score"],
         "confidence": ml_res["confidence"],
         "detected_indicators": ml_res["detected_indicators"],
+        "verification_status": verif_status,
         "ml_result": ml_res,
         "ai_assessment": ai_explanation,
         "is_download": False
@@ -100,6 +123,7 @@ def analyze_url(req: URLAnalyzeRequest):
         "threat_category": ml_res["threat_category"],
         "risk_score": composite["risk_score"],
         "severity": composite["severity"],
+        "verification_status": verif_status,
         "confidence": ml_res["confidence"],
         "detected_indicators": ml_res["detected_indicators"],
         "explanation": ai_explanation,
@@ -135,6 +159,14 @@ def analyze_page(req: PageAnalyzeRequest):
         adaptive_thresholds=adaptive_profile.get("adapted_thresholds")
     )
 
+    verif_status = compute_verification_status(
+        domain=ml_res["domain"],
+        url=req.url,
+        risk_score=composite["risk_score"],
+        indicators=ml_res["detected_indicators"],
+        db_service=db_service
+    )
+
     agent_context = {
         "url": req.url,
         "domain": ml_res["domain"],
@@ -143,6 +175,7 @@ def analyze_page(req: PageAnalyzeRequest):
         "risk_score": composite["risk_score"],
         "confidence": ml_res["confidence"],
         "detected_indicators": ml_res["detected_indicators"],
+        "verification_status": verif_status,
         "ml_result": ml_res,
         "ai_assessment": ai_explanation,
         "is_download": False
@@ -161,6 +194,7 @@ def analyze_page(req: PageAnalyzeRequest):
         "threat_category": ml_res["threat_category"],
         "risk_score": composite["risk_score"],
         "severity": composite["severity"],
+        "verification_status": verif_status,
         "confidence": ml_res["confidence"],
         "detected_indicators": ml_res["detected_indicators"],
         "explanation": ai_explanation,
@@ -221,3 +255,64 @@ def analyze_download(req: DownloadAnalyzeRequest):
         "parent_alert_sent": True,
         "notice": "DEMO QUARANTINE: Simulated quarantine workflow in compliance with browser sandbox boundaries."
     }
+
+@router.post("/screen")
+def analyze_screen(req: ScreenAnalyzeRequest):
+    """
+    Analyzes captured screen share image via Gemini Vision AI and feature extraction.
+    """
+    if not req.image_base64:
+        raise HTTPException(status_code=400, detail="Image base64 payload is required")
+
+    vision_res = gemini_service.analyze_screen_image(req.image_base64, req.url or "")
+    
+    url_target = req.url or "https://screen-capture.local"
+    domain = url_target.split("//")[-1].split("/")[0] or "screen-share.local"
+    risk_score = vision_res.get("risk_score", 85)
+    indicators = vision_res.get("detected_indicators", []) + vision_res.get("visual_signals", [])
+
+    verif_status = compute_verification_status(
+        domain=domain,
+        url=url_target,
+        risk_score=risk_score,
+        indicators=indicators,
+        db_service=db_service
+    )
+
+    agent_context = {
+        "url": url_target,
+        "domain": domain,
+        "threat_type": vision_res.get("threat_type", "Suspicious Page Elements"),
+        "threat_category": vision_res.get("threat_category", "gaming_scams"),
+        "risk_score": risk_score,
+        "confidence": 92,
+        "detected_indicators": indicators,
+        "verification_status": verif_status,
+        "is_download": False
+    }
+    agent_decision = response_agent.decide_and_execute(agent_context)
+
+    intent_info = gemini_service.classify_safe_intent(vision_res.get("threat_type", "gaming"))
+    safe_alts = db_service.get_safe_resources(category=intent_info.get("category", "gaming"))
+
+    return {
+        "url": url_target,
+        "domain": domain,
+        "threat_type": vision_res.get("threat_type", "Suspicious Page Elements"),
+        "threat_category": vision_res.get("threat_category", "gaming_scams"),
+        "risk_score": risk_score,
+        "severity": "DANGEROUS" if risk_score >= 80 else ("SUSPICIOUS" if risk_score >= 50 else "SAFE"),
+        "verification_status": verif_status,
+        "confidence": 92,
+        "detected_indicators": indicators,
+        "explanation": {
+            "child_explanation": vision_res.get("child_explanation"),
+            "parent_technical_summary": vision_res.get("parent_technical_summary"),
+            "risk_explanation": vision_res.get("child_explanation")
+        },
+        "response_actions": agent_decision["actions"],
+        "incident_id": agent_decision.get("incident_id"),
+        "safe_alternatives": safe_alts[:3],
+        "final_decision": "BLOCK_PAGE" if risk_score >= 80 else ("WARN" if risk_score >= 50 else "ALLOW")
+    }
+

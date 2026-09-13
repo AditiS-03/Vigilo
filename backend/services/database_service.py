@@ -134,12 +134,63 @@ class DatabaseService:
         )
         """)
 
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS trusted_sources (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            domain TEXT NOT NULL,
+            category TEXT NOT NULL,
+            description TEXT NOT NULL,
+            official INTEGER DEFAULT 1,
+            verified INTEGER DEFAULT 1,
+            allowed_regions TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """)
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS parent_contacts (
+            id TEXT PRIMARY KEY,
+            child_id TEXT UNIQUE,
+            name TEXT NOT NULL,
+            relationship TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            alert_high_risk INTEGER DEFAULT 1,
+            alert_downloads INTEGER DEFAULT 1,
+            alert_medium_risk INTEGER DEFAULT 0,
+            notification_method TEXT DEFAULT 'in_app',
+            updated_at TEXT NOT NULL
+        )
+        """)
+
+        # Migration: ensure verification_status exists on incidents table
+        try:
+            cur.execute("ALTER TABLE incidents ADD COLUMN verification_status TEXT DEFAULT 'UNVERIFIED'")
+        except Exception:
+            pass
+
         conn.commit()
 
         # Seed initial safe resources if empty
         cur.execute("SELECT COUNT(*) as cnt FROM safe_resources")
         if cur.fetchone()["cnt"] == 0:
             self._seed_safe_resources(cur)
+
+        # Seed initial trusted sources if empty
+        cur.execute("SELECT COUNT(*) as cnt FROM trusted_sources")
+        if cur.fetchone()["cnt"] == 0:
+            self._seed_trusted_sources(cur)
+
+        # Seed initial parent contact if empty
+        cur.execute("SELECT COUNT(*) as cnt FROM parent_contacts")
+        if cur.fetchone()["cnt"] == 0:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            cur.execute("""
+                INSERT INTO parent_contacts (id, child_id, name, relationship, email, phone, alert_high_risk, alert_downloads, alert_medium_risk, notification_method, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (str(uuid.uuid4()), "default-child-1", "Sarah Miller", "Parent / Guardian", "sarah.miller@example.com", "+1 (555) 019-2834", 1, 1, 0, "in_app", now_iso))
 
         # Seed initial adaptive profile if empty
         cur.execute("SELECT COUNT(*) as cnt FROM risk_profiles")
@@ -178,6 +229,24 @@ class DatabaseService:
                 INSERT INTO safe_resources (id, name, url, category, description, verified, tags, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (str(uuid.uuid4()), name, url, category, desc, verified, tags, now_iso))
+
+    def _seed_trusted_sources(self, cur):
+        now_iso = datetime.now(timezone.utc).isoformat()
+        seeds = [
+            ("Official Minecraft Marketplace", "minecraft.net", "gaming", "Official verified skins, worlds, and launcher", 1, 1, json.dumps(["GLOBAL"])),
+            ("CurseForge Verified Mods", "curseforge.com", "gaming", "Vetted community mods with automated virus checks", 1, 1, json.dumps(["GLOBAL"])),
+            ("Roblox Official Platform", "roblox.com", "gaming", "Official Roblox gaming portal & verified avatar shop", 1, 1, json.dumps(["GLOBAL"])),
+            ("Scratch MIT Media Lab", "scratch.mit.edu", "coding", "Creative coding environment for children by MIT", 1, 1, json.dumps(["GLOBAL"])),
+            ("Code.org Safe Portal", "code.org", "coding", "Interactive CS puzzles and game building lessons", 1, 1, json.dumps(["GLOBAL"])),
+            ("National Geographic Kids", "kids.nationalgeographic.com", "education", "Verified animal facts, quizzes, and space science", 1, 1, json.dumps(["GLOBAL"])),
+            ("PBS KIDS Official", "pbskids.org", "education", "Safe educational games and streaming for kids", 1, 1, json.dumps(["GLOBAL"])),
+            ("NASA Kids' Club", "nasa.gov", "education", "Official space exploration missions & STEM fun", 1, 1, json.dumps(["GLOBAL"]))
+        ]
+        for name, domain, category, desc, official, verified, regions in seeds:
+            cur.execute("""
+                INSERT INTO trusted_sources (id, name, domain, category, description, official, verified, allowed_regions, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (str(uuid.uuid4()), name, domain, category, desc, official, verified, regions, now_iso, now_iso))
 
     def _seed_coach_lessons(self, cur):
         now_iso = datetime.now(timezone.utc).isoformat()
@@ -558,3 +627,96 @@ class DatabaseService:
             "safety_status": "ACTIVE_PROTECTION",
             "last_active": datetime.now(timezone.utc).isoformat()
         }
+
+    # --- Parent Contact & Parent Alerts API ---
+    def get_parent_contact(self, child_id: str = "default-child-1") -> Dict[str, Any]:
+        conn = self._get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM parent_contacts WHERE child_id = ?", (child_id,))
+        row = cur.fetchone()
+        conn.close()
+        if not row:
+            return {
+                "name": "Sarah Miller",
+                "relationship": "Parent / Guardian",
+                "email": "sarah.miller@example.com",
+                "phone": "+1 (555) 019-2834",
+                "alert_high_risk": True,
+                "alert_downloads": True,
+                "alert_medium_risk": False,
+                "notification_method": "in_app"
+            }
+        item = dict(row)
+        item["alert_high_risk"] = bool(item["alert_high_risk"])
+        item["alert_downloads"] = bool(item["alert_downloads"])
+        item["alert_medium_risk"] = bool(item["alert_medium_risk"])
+        return item
+
+    def save_parent_contact(self, contact: Dict[str, Any], child_id: str = "default-child-1") -> Dict[str, Any]:
+        conn = self._get_connection()
+        cur = conn.cursor()
+        now_iso = datetime.now(timezone.utc).isoformat()
+        cur.execute("SELECT id FROM parent_contacts WHERE child_id = ?", (child_id,))
+        row = cur.fetchone()
+        contact_id = row["id"] if row else str(uuid.uuid4())
+
+        cur.execute("""
+            INSERT OR REPLACE INTO parent_contacts
+            (id, child_id, name, relationship, email, phone, alert_high_risk, alert_downloads, alert_medium_risk, notification_method, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            contact_id,
+            child_id,
+            contact.get("name", "Parent / Guardian"),
+            contact.get("relationship", "Parent / Guardian"),
+            contact.get("email", ""),
+            contact.get("phone", ""),
+            1 if contact.get("alert_high_risk", True) else 0,
+            1 if contact.get("alert_downloads", True) else 0,
+            1 if contact.get("alert_medium_risk", False) else 0,
+            contact.get("notification_method", "in_app"),
+            now_iso
+        ))
+        conn.commit()
+        conn.close()
+        contact["id"] = contact_id
+        contact["updated_at"] = now_iso
+        return contact
+
+    def get_parent_alerts(self, limit: int = 20) -> List[Dict[str, Any]]:
+        conn = self._get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT n.*, i.domain, i.url, i.threat_type, i.risk_score, i.action_taken, i.detected_indicators
+            FROM notifications n
+            LEFT JOIN incidents i ON n.incident_id = i.id
+            ORDER BY n.created_at DESC LIMIT ?
+        """, (limit,))
+        rows = cur.fetchall()
+        conn.close()
+        results = []
+        for r in rows:
+            item = dict(r)
+            item["detected_indicators"] = json.loads(item["detected_indicators"]) if item["detected_indicators"] else []
+            item["read"] = bool(item["read"])
+            results.append(item)
+        return results
+
+    def get_trusted_sources_db(self, category: Optional[str] = None) -> List[Dict[str, Any]]:
+        conn = self._get_connection()
+        cur = conn.cursor()
+        if category:
+            cur.execute("SELECT * FROM trusted_sources WHERE category = ?", (category,))
+        else:
+            cur.execute("SELECT * FROM trusted_sources")
+        rows = cur.fetchall()
+        conn.close()
+        results = []
+        for r in rows:
+            item = dict(r)
+            item["allowed_regions"] = json.loads(item["allowed_regions"]) if item["allowed_regions"] else []
+            item["official"] = bool(item["official"])
+            item["verified"] = bool(item["verified"])
+            results.append(item)
+        return results
+

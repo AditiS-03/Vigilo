@@ -109,7 +109,7 @@ export async function simulateScenario(scenarioId) {
 }
 
 export async function analyzeLiveInput(type, payload) {
-  const endpoint = type === 'url' ? '/analyze/url' : type === 'page' ? '/analyze/page' : '/analyze/download';
+  const endpoint = type === 'url' ? '/analyze/url' : type === 'page' ? '/analyze/page' : type === 'screen' ? '/analyze/screen' : '/analyze/download';
   const res = await fetch(`${API_BASE}${endpoint}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -128,3 +128,26 @@ export async function askVigiloAI(question, context = '') {
   if (!res.ok) throw new Error('Failed to get answer from Vigilo AI');
   return res.json();
 }
+
+export async function fetchParentContact() {
+  const res = await fetch(`${API_BASE}/parent-contact`);
+  if (!res.ok) throw new Error('Failed to fetch parent contact');
+  return res.json();
+}
+
+export async function saveParentContact(contactData) {
+  const res = await fetch(`${API_BASE}/parent-contact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(contactData)
+  });
+  if (!res.ok) throw new Error('Failed to save parent contact');
+  return res.json();
+}
+
+export async function fetchParentAlerts(limit = 20) {
+  const res = await fetch(`${API_BASE}/parent-contact/alerts?limit=${limit}`);
+  if (!res.ok) throw new Error('Failed to fetch parent alerts');
+  return res.json();
+}
+

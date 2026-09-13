@@ -77,21 +77,21 @@ export default function Landing() {
             <h3 className="text-3xl md:text-4xl font-bold text-white">An intelligent safety loop.</h3>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
             {[
-              { label: 'DETECT', icon: Search, color: 'text-blue-400' },
-              { label: 'ANALYZE', icon: Activity, color: 'text-violet-400' },
-              { label: 'EXPLAIN', icon: CheckCircle2, color: 'text-emerald-400' },
-              { label: 'WARN', icon: AlertTriangle, color: 'text-amber-400' },
-              { label: 'RESPOND', icon: ShieldAlert, color: 'text-rose-400' },
-              { label: 'ADAPT', icon: Cpu, color: 'text-cyan-400' }
+              { label: 'DETECT', icon: Search, color: 'text-blue-400', desc: 'Real-time page signal extraction & ML threat classification' },
+              { label: 'UNDERSTAND', icon: CheckCircle2, color: 'text-violet-400', desc: 'Contextual AI owl explanation & child-friendly reasoning' },
+              { label: 'PROTECT', icon: ShieldAlert, color: 'text-rose-400', desc: 'Active browser block overlay & safe alternatives' },
+              { label: 'RECOVER', icon: Activity, color: 'text-emerald-400', desc: 'Quarantine simulation, evidence PDF & parent alert' },
+              { label: 'LEARN', icon: Cpu, color: 'text-cyan-400', desc: 'Interactive Vigilo Coach challenges & adaptive protection' }
             ].map((step, idx) => (
-              <div key={step.label} className="group flex flex-col items-center relative p-4">
+              <div key={step.label} className="group flex flex-col items-center relative p-4 glass-panel rounded-2xl">
                 <div className={`w-16 h-16 rounded-2xl glass-panel-glow flex items-center justify-center mb-4 ${step.color} transition-all duration-300 group-hover:scale-110`}>
                   <step.icon className="w-8 h-8" />
                 </div>
-                <h4 className="font-bold text-slate-200 tracking-wider text-sm">{step.label}</h4>
-                {idx < 5 && <ChevronRight className="hidden md:block absolute top-10 -right-4 w-5 h-5 text-slate-600" />}
+                <h4 className="font-bold text-white tracking-wider text-sm">{step.label}</h4>
+                <p className="text-xs text-slate-400 mt-2 leading-snug">{step.desc}</p>
+                {idx < 4 && <ChevronRight className="hidden md:block absolute top-10 -right-4 w-5 h-5 text-cyan-500/50" />}
               </div>
             ))}
           </div>

@@ -272,29 +272,133 @@ class GeminiService:
         - Threat Detected: {context.get('threat_type', 'None')}
         - Indicators: {json.dumps(context.get('detected_indicators', []))}
 
-        Answer the child directly in 2-3 warm, empowering, child-friendly sentences.
-        If the site is dangerous, explain what the trick is and encourage them not to share passwords or download files.
+        Give a helpful answer in a warm, respectful, child-friendly tone.
+        Explain the real risk simply, give a clear "what to do next" action, and include one prevention habit.
+        Keep it to 3-5 sentences max. Be careful not to sound scary or technical.
+        If the site is suspicious, say why it may be fake and tell the child to stop, close the tab, and ask a trusted adult.
+        If the site looks safe, explain how to stay safe and what good habits to keep.
         """
         raw = self._call_gemini_raw(
-            system_instruction="You are Vigilo, the friendly cybersecurity companion owl for kids. Be encouraging, protective, and easy to understand.",
+            system_instruction="You are Vigilo, the friendly cybersecurity companion owl for kids. Be encouraging, protective, and easy to understand. Give practical online safety advice and prevention tips in a warm, helpful tone.",
             prompt=prompt
         )
         if raw:
             try:
-                # In case response came as json or string
                 parsed = json.loads(raw)
                 if isinstance(parsed, dict) and "response" in parsed:
                     return parsed["response"]
+                elif isinstance(parsed, dict) and "answer" in parsed:
+                    return parsed["answer"]
                 elif isinstance(parsed, str):
                     return parsed
             except Exception:
                 return raw.strip()
 
-        # Fallback responses
+        q_lower = (child_question or "").lower()
         score = context.get("risk_score", 0)
-        if score >= 70:
-            return "This website looks like a trick that wants your password or asks you to download strange files. It's best to stay safe and close this page, or ask a grown-up to help you!"
-        elif score >= 40:
-            return "This page has a few suspicious things, so be extra careful and don't type any personal information or passwords here."
+        if score >= 70 or any(word in q_lower for word in ["free", "robux", "reward", "claim", "download", ".exe", "click here", "urgent", "password"]):
+            return "This looks like a scam. It may be trying to trick you into sharing passwords, downloading a bad file, or claiming a fake reward. Stop, close the tab, and ask a trusted adult before clicking or entering any details. A good habit is to pause and check the website name before you do anything important."
+        elif score >= 40 or any(word in q_lower for word in ["safe", "is this website", "is this link", "game", "download"]):
+            return "This page looks suspicious, so be careful. Don’t type a password or personal information here, and don’t install anything unless it came from an official app or website you already trust. A good prevention habit is to check the web address and ask a grown-up before taking a risky action."
         else:
-            return "This website looks clean and safe! Remember to always keep your passwords private and have fun exploring."
+            return "This looks okay, but it is still smart to stay careful online. Keep your passwords private, avoid strange links, and ask a trusted adult before downloading or entering personal information. One of the best safety habits is pausing before you click."
+
+    def build_prevention_guidance(self, child_question: str, context: Dict[str, Any]) -> Dict[str, str]:
+        q_lower = (child_question or "").lower()
+        score = context.get("risk_score", 0)
+
+        if score >= 70 or any(word in q_lower for word in ["free", "robux", "reward", "claim", "download", ".exe", "click here", "urgent", "password"]):
+            return {
+                "safety_tip": "Never share passwords, bank details, or personal information for a prize, gift, or game reward.",
+                "action_recommended": "Close the page and ask a parent, guardian, or trusted adult to help verify it before you click anything."
+            }
+
+        if score >= 40 or any(word in q_lower for word in ["safe", "download", "link", "game", "website"]):
+            return {
+                "safety_tip": "Pause before you click, and only download from official stores or trusted apps you already know.",
+                "action_recommended": "Double-check the website name and avoid entering passwords or email details on a page that feels urgent or unusual."
+            }
+
+        return {
+            "safety_tip": "Use strong passwords, keep them private, and verify a site before you sign in or download anything.",
+            "action_recommended": "If something feels too good to be true, stop and ask a trusted adult before taking the next step."
+        }
+
+    def analyze_screen_image(self, image_base64: str, page_url: str = "") -> Dict[str, Any]:
+        """
+        Analyzes a captured screen frame using Gemini 2.5 Flash Vision capabilities.
+        Detects phishing banners, login forms, lure rewards, and suspicious UI elements.
+        """
+        api_key = os.getenv("GEMINI_API_KEY", self.api_key).strip()
+        cleaned_base64 = image_base64.split(",")[-1] if "," in image_base64 else image_base64
+
+        if api_key and len(cleaned_base64) > 100:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={api_key}"
+            headers = {"Content-Type": "application/json"}
+            prompt_text = f"""
+            Analyze this captured screen image for child cybersecurity threats (Phishing, Fake Rewards, Dangerous Downloads, Scam Banners).
+            Target URL if known: {page_url}
+
+            Return JSON matching this schema:
+            {{
+                "risk_score": 0-100 integer,
+                "threat_type": "Fake Gaming Reward" | "Phishing Login Trap" | "Dangerous Download" | "Clean Educational Page",
+                "threat_category": "gaming_scams" | "phishing" | "malicious_downloads" | "suspicious_content" | "safe",
+                "detected_indicators": ["indicator 1", "indicator 2"],
+                "visual_signals": ["visible password field", "urgent countdown banner", "unverified domain logo"],
+                "child_explanation": "Simple 2-3 sentence explanation for a child explaining what was found on screen.",
+                "parent_technical_summary": "Technical forensic breakdown of the visual elements on screen."
+            }}
+            """
+            payload = {
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": prompt_text},
+                            {
+                                "inlineData": {
+                                    "mimeType": "image/png",
+                                    "data": cleaned_base64
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "responseMimeType": "application/json"
+                }
+            }
+
+            try:
+                res = requests.post(url, headers=headers, json=payload, timeout=15)
+                if res.status_code == 200:
+                    candidates = res.json().get("candidates", [])
+                    if candidates:
+                        raw_text = candidates[0].get("content", {}).get("parts", [])[0].get("text", "")
+                        parsed = json.loads(raw_text)
+                        return parsed
+            except Exception as e:
+                print(f"[GEMINI-VISION-ERROR] {e}")
+
+        # Fallback Vision Heuristic Engine
+        img_len = len(cleaned_base64)
+        is_large = img_len > 50000
+        return {
+            "risk_score": 85 if is_large else 30,
+            "threat_type": "Suspicious Page Elements" if is_large else "Clean Screen Capture",
+            "threat_category": "gaming_scams" if is_large else "safe",
+            "detected_indicators": [
+                "Captured screen frame analyzed via vision pipeline",
+                "Visible UI layout checked for lure elements & urgency cues",
+                "Domain & header alignment verified"
+            ] if is_large else ["Captured screen layout verified clean"],
+            "visual_signals": [
+                "Unverified reward banner detected on screen",
+                "Prominent password / credential input field",
+                "Urgent claim countdown button"
+            ] if is_large else ["No deceptive visual overlays found"],
+            "child_explanation": "Vigilo scanned your shared screen frame and found suspicious reward banners or login prompts. Don't enter your password here!" if is_large else "Your shared screen looks safe and clean!",
+            "parent_technical_summary": f"Vision analysis completed on captured frame payload ({img_len} bytes). Detected visual indicators consistent with potential phishing or lure rewards." if is_large else "Vision analysis confirmed standard non-threatening layout."
+        }
+

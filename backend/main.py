@@ -20,6 +20,7 @@ from api.coach import router as coach_router
 from api.safe_alternatives import router as safe_alt_router
 from api.ask_vigilo import router as ask_vigilo_router
 from api.demo import router as demo_router
+from api.parent_contact import router as parent_contact_router
 from services.database_service import DatabaseService
 
 from contextlib import asynccontextmanager
@@ -56,6 +57,7 @@ app.include_router(coach_router)
 app.include_router(safe_alt_router)
 app.include_router(ask_vigilo_router)
 app.include_router(demo_router)
+app.include_router(parent_contact_router)
 
 @app.get("/")
 def root():
