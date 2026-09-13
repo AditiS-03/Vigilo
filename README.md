@@ -1,128 +1,696 @@
-# Vigilo - AI-Powered Child-Safety Browser Defense & Dashboard
+# 🛡️ Vigilo
 
-> **"Don't just block danger. Detect it, explain it, respond to it, and teach children to recognize it."**
+### A smarter safety layer for children online.
 
-Vigilo is an intelligent, multi-layered child safety ecosystem designed for a 48-hour hackathon build. It combines client-side browser defense (Manifest V3 Chrome Extension) with a server-side multi-signal detection engine (Scikit-Learn Random Forest + Google Gemini AI + Threat Intelligence) and an executive Parent Safety Analytics Dashboard.
+Vigilo is an AI-powered child online safety platform designed to help children identify and avoid suspicious websites, phishing attempts, scam links and dangerous downloads before they become serious incidents.
+
+Instead of relying only on reporting or reactive protection, Vigilo focuses on:
+
+**Detect → Analyze → Intervene → Protect**
+
+Working Prototype: https://vigilogdg-theta.vercel.app/
+---
+
+## 🚨 The Problem
+
+Children increasingly spend time online across:
+
+- Gaming platforms
+- Video platforms
+- Search engines
+- Social platforms
+- Educational websites
+- Online communities
+
+This creates exposure to risks such as:
+
+- Phishing websites
+- Fake gaming rewards
+- Scam links
+- Fake account verification pages
+- Malicious downloads
+- Credential-stealing pages
+- Deceptive calls to action
+
+A child may not recognize that a website is dangerous before clicking or entering information.
+
+Traditional approaches often focus on:
+
+- Blacklists
+- Parental controls
+- Warnings
+- User reporting
+- Post-incident investigation
+
+Vigilo takes a more proactive approach.
 
 ---
 
-## 🌟 Hackathon Scope & Disclaimer
+# 💡 Our Solution
 
-> [!IMPORTANT]
-> This is a hackathon MVP, not a commercial antivirus product. Vigilo does not claim to provide complete operating-system-level security or malware disinfection. Where platform sandbox boundaries prevent OS-level quarantine, a clearly labeled **"Demo Quarantine"** workflow is executed to illustrate the full security and recovery lifecycle.
+Vigilo combines a Chrome browser extension, machine learning, security signals, AI assistance and incident management into one child-focused safety layer.
 
----
+### The Vigilo Protection Loop
 
-## 🛡️ Core Modules Implemented
+```text
+Child Browses
+      ↓
+Vigilo Extension
+      ↓
+Real-Time Page Analysis
+      ↓
+ML Threat Detection
+      ↓
+Risk Score + Threat Classification
+      ↓
+Protective Response
+      ↓
+Safe Alternative / Vigilo Coach
+      ↓
+Incident Creation
+      ↓
+Parent Alert
+      ↓
+Evidence Pack
 
-1. **ML-Powered Scam & Phishing Detection**: Feature extraction engine (16 lexical and page signals) paired with a trained Scikit-Learn Random Forest model (extensible to XGBoost) delivering 0–100 risk scores and confidence metrics.
-2. **Vigilo Response Agent**: Guardrailed Gemini-assisted response agent operating strictly on a fixed allowlist of actions (`BLOCK_PAGE`, `CANCEL_DOWNLOAD`, `QUARANTINE_SIMULATION`, `GENERATE_EVIDENCE`, `NOTIFY_PARENT`, `SHOW_RECOVERY_GUIDANCE`, `SHOW_SAFE_ALTERNATIVE`, `START_COACH_LESSON`).
-3. **Vigilo Clean-Up**: Browser-level suspicious download detection, automatic cancellation of `.exe`/`.scr`/`.bat` files, demo quarantine simulation, and child recovery guidance.
-4. **Vigilo Evidence Pack**: Structured JSON security forensic records, responsive HTML evidence previews, and official branded PDF reports.
-5. **Parent Safety Dashboard**: Cyber-defense theme built with React and Tailwind CSS featuring Today's Protection KPIs, incident feeds, threat category breakdowns, and a 1-click Judge Demo Console.
-6. **Vigilo Coach**: Interactive cybersecurity challenges for children, teaching credential safety, bait identification, and download hazards with instant feedback.
-7. **Vigilo Adaptive Protection**: Privacy-preserving threat model that adapts warning thresholds based on aggregated category counters (e.g. lowering gaming scam threshold from 70 to 55) without storing private browsing history.
-8. **Vigilo Safe Alternatives**: Replaces sterile block screens with vetted official resources (Minecraft Marketplace, CurseForge, Scratch MIT) queried from a verified database—AI URL fabrication is strictly forbidden.
-9. **Ask Vigilo AI**: Context-aware child safety companion owl accessible directly within the browser extension popup.
+✨ Key Features
+1. 🧠 ML-Powered Scam & Phishing Detection
 
----
+Vigilo analyzes measurable URL and webpage characteristics and uses a machine-learning model to estimate the likelihood that a page represents a security threat.
 
-## 📐 Technology Stack
+Potential signals include:
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Backend Framework** | Python 3.14, FastAPI, Uvicorn, Pydantic |
-| **Machine Learning** | Scikit-Learn (Random Forest), NumPy, Joblib |
-| **Generative AI** | Google Gemini 2.5 Flash (Direct REST API / SDK) |
-| **PDF & Evidence** | FPDF2, JSON Schema, Custom HTML Forensic Templates |
-| **Browser Extension** | Chrome Extensions Manifest V3, Service Workers, Content Script Injection |
-| **Parent Dashboard** | React 18, Vite, Tailwind CSS, Lucide Icons |
-| **Storage & DB** | SQLite local persistence out-of-the-box, Supabase/PostgreSQL schema ready |
+URL characteristics
+Domain characteristics
+HTTPS usage
+Suspicious keywords
+Credential input fields
+Download links
+External domains
+Page structure
+Suspicious iframes
+Other extracted security signals
 
----
+The ML system produces:
 
-## ⚡ Quick Start Guide
+Threat probability
+Risk score
+Threat classification
+Severity
+Detected signals
 
-### Prerequisites
-- Python 3.10+ (Tested on Python 3.14)
-- Node.js v18+ (Tested on Node.js v22)
-- Google Chrome, Brave, or Edge browser
+Example:
 
----
+Risk Score: 94/100
+Threat: Gaming Phishing
+Severity: HIGH
 
-### Step 1: Start the FastAPI Backend
+The displayed score is generated by the detection pipeline rather than being a fixed frontend value.
 
-```bash
-# Navigate to backend directory
-cd vigilo/backend
+2. 🌐 Real-Time Chrome Extension
 
-# (Optional) Set your Gemini API key in .env or environment:
-# set GEMINI_API_KEY=your_key_here
+Vigilo is designed as a Chrome browser protection layer using Manifest V3.
 
-# Run backend server
-python main.py
-```
-Backend will start on: **`http://localhost:8000`**  
-Interactive API Docs (Swagger UI): **`http://localhost:8000/docs`**
+The extension can analyze the active webpage and communicate with the Vigilo backend.
 
----
+Extension workflow
+Current Webpage
+      ↓
+Content / URL Signals
+      ↓
+Vigilo Extension
+      ↓
+FastAPI Backend
+      ↓
+ML Threat Detection
+      ↓
+Risk Result
+      ↓
+Warning / Protection
 
-### Step 2: Start the React Parent Dashboard
+The extension is designed to collect only the information required for security analysis.
 
-```bash
-# In a new terminal, navigate to dashboard directory
-cd vigilo/dashboard
+3. 🔍 Quick Scan
 
-# Install packages (if not done yet)
-npm install
+Quick Scan allows the user to analyze the current webpage.
 
-# Start Vite development server
-npm run dev
-```
-Dashboard will be live at: **`http://localhost:5173`**
+The user grants permission for Vigilo to analyze the page.
 
----
+Vigilo then evaluates available signals and displays:
 
-### Step 3: Load the Vigilo Chrome Extension
+Page information
+Domain
+Security signals
+Threat type
+Risk score
+Risk level
+Verification status
+Recommended action
 
-1. Open Chrome/Brave/Edge and navigate to `chrome://extensions/`.
-2. Enable **Developer mode** in the top-right toggle.
-3. Click **Load unpacked**.
-4. Select the folder: `vigilo/extension`.
-5. The Vigilo Shield icon will appear in your browser bar!
+Example:
 
----
+PAGE SAFETY REPORT
 
-## 🎯 Live Demo Presentation Scenarios
+Website:
+example.com
 
-You can trigger any scenario instantly via the 1-Click Banner in the Parent Dashboard or inside the Extension Popup:
+Risk:
+HIGH
 
-1. **Scenario 1: Safe Educational Site** (`https://kids.nationalgeographic.com/animals`)  
-   *Result*: 🟢 Score 10/100 (SAFE) • Access permitted.
-2. **Scenario 2: Fake Gaming Reward** (`http://free-minecraft-coins-999.xyz/claim`)  
-   *Result*: 🔴 Score 92/100 (HIGH RISK) • Block screen injected • Minecraft safe alternatives surfaced • Coach quiz prompted.
-3. **Scenario 3: Fake Login Phishing** (`http://192.168.1.105/roblox/login-verify.html`)  
-   *Result*: 🔴 Score 94/100 (DANGEROUS) • Credential harvester blocked • Evidence Pack created • Parent notified.
-4. **Scenario 4: Suspicious Download** (`free-minecraft-coins.exe`)  
-   *Result*: 🚨 Download cancelled • Demo Quarantine • Recovery guidance displayed.
-5. **Scenario 5: Adaptive Protection Shift**  
-   *Result*: ⚡ Gaming scam exposures lower detection threshold from 70 to 55.
-6. **Scenario 6: Vigilo Coach Challenge**  
-   *Result*: 🎮 Interactive scenario quiz with child-friendly explanation.
-7. **Scenario 7: Evidence Pack PDF**  
-   *Result*: 📄 One-click download of branded forensic incident report.
+Score:
+91/100
 
----
+Threat:
+Potential Phishing
 
-## 🔒 Privacy Guarantee
+Detected Signals:
+✓ HTTPS
+⚠ Suspicious domain
+⚠ Credential request
+⚠ Reward-related language
 
-- **Zero Full Browsing Surveillance**: No history logs of safe websites or search queries are stored.
-- **No Password Capture**: Form values are never read or transmitted to AI.
-- **Aggregated Security Counters**: Adaptation relies exclusively on category frequencies (`gaming_scams: 8`).
+The system should use real page data and ML results rather than hardcoded security scores.
 
----
+4. 🛡️ Safe Alternative
 
-## 📚 Documentation Links
-- [System Architecture](docs/architecture.md)
-- [Privacy Standards](docs/privacy.md)
-- [Live Presentation Script](docs/demo.md)
+Vigilo does not simply tell children:
+
+"Don't visit this website."
+
+Instead, it tries to help them achieve their original goal safely.
+
+For example:
+
+Child searches:
+"Free game rewards"
+
+          ↓
+
+Suspicious reward website detected
+
+          ↓
+
+Vigilo:
+
+"This page looks risky."
+
+SAFE OPTIONS
+
+✓ Official game website
+✓ Official marketplace
+✓ Verified developer resource
+
+Safe alternatives should come from trusted/curated sources rather than URLs invented by an LLM.
+
+5. 🧑‍🏫 Vigilo Coach
+
+Vigilo Coach provides immediate, simple cybersecurity guidance to children.
+
+For example:
+
+"This website is asking for your account password. Don't enter it here. Try the official game website instead."
+
+Coach focuses on:
+
+Explaining the current threat
+Giving immediate precautions
+Helping the child understand what to do next
+6. 🦉 Vigilo Owl
+
+Vigilo Owl is the conversational AI assistant.
+
+Unlike a static FAQ chatbot, Owl can use the current Vigilo context to answer questions about:
+
+Detected threats
+Risk scores
+Security signals
+Incidents
+Suspicious downloads
+Recovery steps
+General online safety
+
+Example:
+
+User:
+Why was this website blocked?
+
+Vigilo Owl:
+The page was flagged because the security system
+detected multiple signals associated with phishing,
+including a suspicious domain and a request for
+account credentials.
+
+Owl is designed to explain the output of the security system.
+
+It should not independently invent threat detections or security decisions.
+
+7. 🧹 Vigilo Clean-Up
+
+If a suspicious download is detected, Vigilo starts a recovery workflow.
+
+Suspicious Download
+        ↓
+Threat Analysis
+        ↓
+Risk Classification
+        ↓
+Incident Created
+        ↓
+Recovery Guidance
+        ↓
+Parent Alert
+
+The system can use browser permissions where available.
+
+Where full browser/device-level quarantine is not available, Vigilo uses a clearly labelled controlled/simulated protection workflow rather than falsely claiming antivirus functionality.
+
+8. 🚨 Parent Alerts
+
+Parents or authorized guardians can add their contact information through the user's profile.
+
+The profile can include:
+
+Parent/guardian name
+Relationship
+Email
+Phone
+Alert preferences
+
+Example preferences:
+
+☑ High-risk threats
+☑ Dangerous downloads
+☐ Medium-risk threats
+
+Serious incidents can trigger a parent alert.
+
+Example:
+
+VIGILO ALERT
+
+High-risk threat detected
+
+Threat:
+Gaming Phishing
+
+Risk:
+94/100
+
+Detected:
+• Suspicious domain
+• Credential request
+• Fake reward claim
+
+Action:
+Website blocked
+
+Vigilo should only expose security-relevant information and avoid unnecessary private browsing details.
+
+9. 📋 Incident Management
+
+Serious security events can create structured incidents.
+
+An incident may contain:
+
+Incident ID
+Profile ID
+Timestamp
+URL
+Domain
+File name
+File type
+File size
+Threat type
+Risk score
+Severity
+Detection signals
+Action taken
+Parent alert status
+Incident status
+
+Examples include:
+
+High-risk phishing
+Suspicious download
+Credential theft attempt
+Scam
+Dangerous webpage
+10. 📄 Vigilo Evidence Pack
+
+For serious incidents, Vigilo can generate a structured evidence report.
+
+The report can contain:
+
+Incident ID
+Date/time
+Threat type
+Risk score
+URL/domain
+Detected signals
+Action taken
+Parent alert status
+Recovery recommendations
+
+The report can be generated as a downloadable PDF.
+
+Vigilo focuses on preserving relevant technical information without unnecessarily storing a child's private browsing content.
+
+11. 🔄 Adaptive Protection
+
+Vigilo can identify recurring threat categories associated with a profile.
+
+For example:
+
+YOUR PROTECTION
+
+Gaming       HIGH
+Phishing     HIGH
+Downloads    MEDIUM
+Social       STANDARD
+
+Instead of exposing complex formulas, the feature communicates:
+
+Vigilo adapts protection based on recurring threat categories.
+
+Adaptive protection should use aggregated security categories rather than invasive browsing surveillance.
+
+🤖 AI / ML Architecture
+
+Vigilo intentionally separates the responsibilities of ML, rules and generative AI.
+
+                   WEBPAGE
+                      ↓
+              Chrome Extension
+                      ↓
+             Feature Extraction
+                      ↓
+                FastAPI API
+                      ↓
+              ML Threat Model
+                      ↓
+          Risk Probability / Score
+                      ↓
+             Threat Classification
+                      ↓
+          Protective Safety Rules
+                      ↓
+             ┌────────┴────────┐
+             ↓                 ↓
+          Safe/Warn           Block
+             ↓
+       Incident System
+             ↓
+      Parent / Evidence
+AI Assistant Architecture
+User
+ ↓
+Vigilo Owl
+ ↓
+Relevant Vigilo Context
+ ↓
+LLM
+ ↓
+Contextual Explanation
+ ↓
+Precaution / Recovery Advice
+Responsibility separation
+Component	Responsibility
+ML Model	Threat detection and classification
+Safety Rules	Protective actions
+LLM	Explanation and contextual guidance
+Database	Profiles, incidents and security history
+Chrome Extension	Browser-level interaction
+Threat Intelligence	Additional reputation/security signals
+
+AI is not used simply for presentation.
+
+🏗️ Technology Stack
+Frontend
+
+React + Vite
+
+Used for:
+
+Dashboard
+Profile
+Quick Scan
+Adaptive Protection
+Incidents
+Evidence
+Parent alerts
+UI
+
+Tailwind CSS
+
+Used for:
+
+Responsive interface
+Consistent design system
+Cybersecurity-themed UI
+Reusable components
+Browser Extension
+
+Chrome Extension — Manifest V3
+
+Used for:
+
+Active webpage interaction
+URL/page signal extraction
+Communication with the Vigilo backend
+Browser-level protection workflow
+Backend
+
+Python + FastAPI
+
+Used for:
+
+ML inference API
+Threat analysis
+Security workflows
+Incident creation
+Backend business logic
+Machine Learning
+
+Python + Scikit-learn / XGBoost
+
+Used for:
+
+Threat classification
+Risk prediction
+Suspicious URL/page analysis
+Database
+
+Supabase + PostgreSQL
+
+Used for:
+
+User profiles
+Parent contacts
+Incidents
+Threat detections
+Parent alerts
+Trusted sources
+Adaptive protection data
+AI
+
+LLM-based Vigilo Owl
+
+Used for:
+
+Contextual explanations
+Cybersecurity guidance
+Recovery advice
+Incident explanations
+Security Intelligence
+
+Threat-intelligence / URL reputation APIs can provide additional signals where appropriate.
+
+Deployment
+
+Frontend:
+
+Vercel
+
+Backend:
+
+Render / Railway
+
+🗃️ High-Level Database Structure
+Profiles
+   │
+   ├── Parent Contacts
+   │
+   ├── Incidents
+   │       │
+   │       ├── Threat Detection
+   │       ├── Parent Alerts
+   │       └── Evidence Reports
+   │
+   └── Adaptive Protection
+
+Potential entities:
+
+profiles
+parent_contacts
+incidents
+threat_detections
+parent_alerts
+trusted_sources
+security_events
+adaptive_profiles
+🎯 Target Users
+Children
+
+Need:
+
+Simple warnings
+Protection from deceptive websites
+Safe alternatives
+Easy-to-understand explanations
+Parents / Guardians
+
+Need:
+
+Visibility into serious incidents
+Alerts
+Incident details
+Evidence reports
+Schools
+
+Potential future users for:
+
+Student online safety
+Institutional protection
+Awareness programs
+NGOs / Child Safety Organizations
+
+Potential future users for:
+
+Child protection programs
+Incident documentation
+Safety education
+Large-scale deployment
+🔐 Privacy & Safety
+
+Vigilo follows a privacy-conscious design.
+
+The platform should:
+
+Minimize collected browsing information
+Avoid unnecessary storage of page content
+Protect parent and child information
+Keep API secrets server-side
+Use role-based access
+Prevent users from accessing another user's incidents
+Clearly distinguish simulated actions from real device-level actions
+
+Vigilo is intended as a safety layer, not a surveillance system.
+
+🧪 Hackathon Demo
+
+The recommended demo uses controlled test scenarios rather than real malicious websites.
+
+Scenario 1 — Gaming Phishing
+Fake Reward Page
+       ↓
+Extension Detects Page
+       ↓
+ML Analysis
+       ↓
+High Risk
+       ↓
+Warning / Block
+       ↓
+Safe Alternative
+       ↓
+Incident Created
+       ↓
+Parent Alert
+       ↓
+Evidence PDF
+Scenario 2 — Suspicious Download
+Suspicious Download
+       ↓
+Threat Analysis
+       ↓
+Incident
+       ↓
+Recovery Guidance
+       ↓
+Parent Alert
+
+The demo should use controlled pages/data so that no real malicious content needs to be accessed.
+
+📊 Success Metrics
+
+Vigilo can measure:
+
+High-risk URLs detected
+Harmful interactions prevented
+Suspicious downloads identified
+Detection latency
+False-positive rate
+Incidents documented
+Parent notification time
+Safe alternatives selected
+Recurring threat categories identified
+🚀 Future Scope
+
+Potential future development includes:
+
+Multilingual voice protection
+Voice-based Vigilo Coach
+Multimodal webpage analysis
+Privacy-preserving adaptive protection
+Advanced browser/device protection
+Institutional deployment
+School and NGO partnerships
+Expanded trusted-source ecosystem
+More threat intelligence integrations
+🌟 Why Vigilo?
+
+Most safety systems answer:
+
+"What happened?"
+
+Vigilo aims to answer:
+
+"Is this risky?"
+
+"Why is it risky?"
+
+"What should the child do instead?"
+
+"Does an adult need to know?"
+
+"What evidence should be preserved?"
+
+The core philosophy is:
+
+DETECT → EXPLAIN → PROTECT → RESPOND
+
+Vigilo aims to move child online safety from reactive reporting toward proactive protection.
+
+🏆 Hackathon Track
+
+BAL SURAKSHA — Child Safety, Protection & Well-being
+
+Vigilo addresses the digital-safety dimension of child protection by helping children navigate potentially harmful online interactions more safely.
+
+⚠️ MVP Scope
+
+Vigilo does NOT claim to be:
+
+A full antivirus
+A replacement for cybersecurity professionals
+A guaranteed malware detector
+A law-enforcement reporting platform
+A surveillance system
+
+Where browser or operating-system permissions prevent a real protective action, the prototype clearly identifies the action as simulated or permission-dependent.
+
+The goal of the MVP is to demonstrate a technically credible:
+
+Detection → Decision → Protection → Incident → Parent Response
+
+workflow.
